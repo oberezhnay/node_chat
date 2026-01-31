@@ -5,6 +5,7 @@ const cors = require('cors');
 const http = require('http');
 const setupSockets = require('./socket/events.js');
 const { sequelize } = require('./db.js');
+require('./models/associations');
 
 const PORT = process.env.PORT || 3000;
 const app = express();

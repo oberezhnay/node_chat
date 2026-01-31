@@ -1,6 +1,7 @@
 'use strict'
 const { Server } = require('socket.io');
 const roomService = require('./../services/room.service.js');
+const userService = require('./../services/user.service.js');
 const messageService = require('./../services/message.service.js');
 
 console.log('SOCKET EVENTS FILE LOADED');
@@ -23,18 +24,28 @@ const setupSockets = (server) => {
 
     socket.on('room_join', async ({ roomId, userName }) => {
       try {
+        const user = userService.findOrCreateUser(userName);
+
+        socket.userId = user.id
+        socket.userName = user.name;
+        socket.roomId = roomId;
+
+        socket.join(roomId);
+
         const room = await roomService.joinRoom({ roomId });
 
         if (!room) {
           throw new Error('Room not found');
         }
 
-        socket.userName = userName;
-        socket.roomId = roomId;
+        const messages = room.Messages.map(msg => ({
+          id: msg.id,
+          text: msg.text,
+          authorName: msg.User.name,
+          createdAt: msg.createdAt,
+        }));
 
-        socket.join(roomId);
-
-        socket.emit('message_history', room.messages);
+        socket.emit('message_history', messages);
       } catch (error) {
         socket.emit('error_message', error.message);
       }
@@ -66,18 +77,23 @@ const setupSockets = (server) => {
           throw new Error('Message is empty');
         }
 
-        if (!socket.userName || !socket.roomId) {
+        if (!socket.userId || !socket.roomId) {
           throw new Error('User is not in room');
         }
 
         const message = await messageService.createMessage({
           text,
-          author: socket.userName,
+          // authorName: socket.userName,
           userId: socket.userId,
           roomId: socket.roomId,
         })
 
-        io.to(socket.roomId).emit('message_new', message);
+        io.to(socket.roomId).emit('message_new', {
+          id: message.id,
+          text: message.text,
+          authorName: socket.userName,
+          createdAt: message.createdAt,
+        });
       } catch (error) {
         socket.emit('error_message', error.message);
       }

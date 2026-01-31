@@ -36,11 +36,11 @@ const Message = sequelize.define(
   },
 );
 
-Message.belongsTo(User, { foreignKey: 'userId' });
-Message.belongsTo(Room, { foreignKey: 'roomId' });
+// Message.belongsTo(User, { foreignKey: 'userId' });
+// Message.belongsTo(Room, { foreignKey: 'roomId' });
 
-User.hasMany(Message, { foreignKey: 'userId' });
-Room.hasMany(Message, { foreignKey: 'roomId' });
+// User.hasMany(Message, { foreignKey: 'userId' });
+// Room.hasMany(Message, { foreignKey: 'roomId' });
 
 module.exports = {
   Message,

@@ -70,19 +70,28 @@ function renderMessages() {
   const messages = state.messages;
   clearChat();
 
-  messages.forEach(message => {
-    const messageBlock = document.createElement('div');
-    const authorEl = document.createElement('strong');
-    const textEl = document.createElement('p');
-    authorEl.textContent = message.authorName;
-    textEl.textContent = message.text;
+  messages.forEach(message => renderOneMessage(message));
 
-    messageBlock.appendChild(authorEl);
-    messageBlock.appendChild(textEl);
+  messageList.scrollTop = messageList.scrollHeight;
+}
 
-    messageList.appendChild(messageBlock);
-  });
+function renderOneMessage(message) {
+  const authorEl = document.createElement('strong');
+  const textEl = document.createElement('p');
+  const dateEl = document.createElement('span');
+  authorEl.textContent = message.authorName;
+  textEl.textContent = message.text;
+  messageBlock.className = 'message';
 
+  dateEl.textContent = new Date(message.createdAt.toLocaleTimeString(uk-UA, {
+    hour: '2-digit',
+    minute: '2-digit',
+  }));
+
+  messageBlock.appendChild(authorEl);
+  messageBlock.appendChild(textEl);
+
+  messageList.appendChild(messageBlock);
 }
 
 function saveUsername(name) {
@@ -161,6 +170,10 @@ const sendMessageHandler = () => {
     return;
   }
 
+  if (!state.activeRoom) {
+    return;
+  }
+
   socket.emit('message_send', {
     text,
     roomId: state.activeRoom.id,
@@ -182,7 +195,7 @@ socket.on('message_history', (messages) => {
 
 socket.on('message_new', message => {
   state.messages.push(message);
-  renderMessages();
+  renderOneMessage(message);
   messageList.scrollTop = messageList.scrollHeight;
 })
 

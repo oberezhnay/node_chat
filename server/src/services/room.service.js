@@ -26,7 +26,7 @@ const renameRoom = async ({ id, newName }) => {
   }
 
   await Room.update({ name: newName }, { where: { id }});
-  const room = Room.findByPk(id)
+  const room = await Room.findByPk(id)
 
   if (!room) {
     throw new Error('Room with this id does not exist');
@@ -36,11 +36,19 @@ const renameRoom = async ({ id, newName }) => {
 };
 
 const joinRoom = async ({ roomId }) => {
-  if (!roomId || !userName) {
+  if (!roomId) {
     throw new Error('data is required');
   }
 
-  const room = await getRoom(roomId);
+  const room = await Room.findByPk(roomId, {
+    include: [
+      {
+        model: Message,
+        include: [User],
+        order: [['createdAt', 'ASC']],
+      },
+    ],
+  });
 
   if (!room) {
     throw new Error('Room with this id does not exist');

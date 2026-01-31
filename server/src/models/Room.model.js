@@ -2,6 +2,7 @@
 
 const { sequelize } = require('../db.js');
 const { DataTypes } = require('sequelize');
+const { Message } = require('./Message.model.js');
 
 const Room = sequelize.define(
   'Room',
@@ -19,17 +20,14 @@ const Room = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    // users: {
-    //   type: DataTypes.ARRAY(DataTypes.INTEGER),
-    //   allowNull: false,
-    //   defaultValue: [],
-    // }
   },
   {
     tableName: 'rooms',
     timestamps: true,
   },
 );
+
+// Room.hasMany(Message, { foreignKey: 'roomId' });
 
 module.exports = {
   Room,
