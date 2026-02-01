@@ -109,6 +109,7 @@ function joinRoom(roomId, roomName) {
   }
 
   state.activeRoom = { id: roomId, name: roomName, };
+  state.messages = [];
   renderChatHeader();
 
   socket.emit('room_join', {
@@ -179,9 +180,6 @@ const sendMessageHandler = () => {
 
   socket.emit('message_send', {
     text,
-    authorName: state.user,
-    userId: socket.userId,
-    roomId: socket.roomId,
   });
 
   messageInput.value = '';
@@ -199,10 +197,18 @@ socket.on('message_history', (messages) => {
 });
 
 socket.on('message_new', message => {
+  if (!state.messages) {
+    state.messages = [];
+  }
+
   state.messages.push(message);
   renderOneMessage(message);
   messageList.scrollTop = messageList.scrollHeight;
-})
+});
+
+socket.on('error_message', message => {
+  console.error('SERVER ERROR:', message);
+});
 
 createRoomBtn.addEventListener('click', createRoomHandler);
 enterNameBtn.addEventListener('click', enterNameBtnHandler);

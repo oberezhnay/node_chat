@@ -13,7 +13,7 @@ const setupSockets = (server) => {
   io.on('connection', async (socket) => {
     console.log('SOCKET CONNECTED', socket.id);
 
-    // socket.emit('room_list',  await roomService.getAllRooms());
+    socket.emit('room_list',  await roomService.getAllRooms());
 
     socket.on('room_create', async ({ name, owner }) => {
       try {
@@ -79,9 +79,9 @@ const setupSockets = (server) => {
 
     socket.on('message_send', async ({ text }) => {
       try {
-        // if (!text || !text.trim()) {
-        //   throw new Error('Message is empty');
-        // }
+        if (!text || !text.trim()) {
+          throw new Error('Message is empty');
+        }
 
         if (!socket.userId || !socket.roomId) {
           throw new Error('User is not in room');
