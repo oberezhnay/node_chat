@@ -76,6 +76,7 @@ function renderMessages() {
 }
 
 function renderOneMessage(message) {
+  const messageBlock = document.createElement('div');
   const authorEl = document.createElement('strong');
   const textEl = document.createElement('p');
   const dateEl = document.createElement('span');
@@ -83,12 +84,13 @@ function renderOneMessage(message) {
   textEl.textContent = message.text;
   messageBlock.className = 'message';
 
-  dateEl.textContent = new Date(message.createdAt.toLocaleTimeString(uk-UA, {
+  dateEl.textContent = new Date(message.createdAt).toLocaleTimeString('uk-UA', {
     hour: '2-digit',
     minute: '2-digit',
-  }));
+  });
 
   messageBlock.appendChild(authorEl);
+  messageBlock.appendChild(dateEl);
   messageBlock.appendChild(textEl);
 
   messageList.appendChild(messageBlock);
@@ -166,17 +168,20 @@ const createRoomHandler = () => {
 const sendMessageHandler = () => {
   const text = messageInput.value.trim();
 
-  if (!text) {
-    return;
-  }
+  console.log('CLICK SEND', {
+    text,
+    activeRoom: state.activeRoom,
+  });
 
-  if (!state.activeRoom) {
+  if (!text || !state.activeRoom) {
     return;
   }
 
   socket.emit('message_send', {
     text,
-    roomId: state.activeRoom.id,
+    authorName: state.user,
+    userId: socket.userId,
+    roomId: socket.roomId,
   });
 
   messageInput.value = '';

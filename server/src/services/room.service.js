@@ -1,4 +1,6 @@
 const { Room } = require('./../models/Room.model.js');
+const { Message } = require('./../models/Message.model.js');
+const { User } = require('./../models/User.model.js')
 
 const createRoom = async ({ name, owner }) => {
   if (!name || !owner) {
@@ -45,9 +47,9 @@ const joinRoom = async ({ roomId }) => {
       {
         model: Message,
         include: [User],
-        order: [['createdAt', 'ASC']],
       },
     ],
+    order: [[Message, 'createdAt', 'ASC']],
   });
 
   if (!room) {

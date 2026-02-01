@@ -12,11 +12,15 @@ const setupSockets = (server) => {
 
   io.on('connection', async (socket) => {
     console.log('SOCKET CONNECTED', socket.id);
-    socket.emit('room_list',  await roomService.getAllRooms());
+
+    // socket.emit('room_list',  await roomService.getAllRooms());
+
     socket.on('room_create', async ({ name, owner }) => {
       try {
         await roomService.createRoom({ name, owner });
-        io.emit('room_list', await roomService.getAllRooms());
+
+        const rooms = await roomService.getAllRooms();
+        io.emit('room_list', rooms);
       } catch (error) {
         socket.emit('error_message', error.message);
       }
@@ -24,28 +28,28 @@ const setupSockets = (server) => {
 
     socket.on('room_join', async ({ roomId, userName }) => {
       try {
-        const user = userService.findOrCreateUser(userName);
+        const user = await userService.findOrCreateUser(userName);
 
         socket.userId = user.id
         socket.userName = user.name;
         socket.roomId = roomId;
 
-        socket.join(roomId);
-
         const room = await roomService.joinRoom({ roomId });
+
+        socket.join(roomId);
 
         if (!room) {
           throw new Error('Room not found');
         }
 
-        const messages = room.Messages.map(msg => ({
-          id: msg.id,
-          text: msg.text,
-          authorName: msg.User.name,
-          createdAt: msg.createdAt,
-        }));
+        // const messages = room.Messages.map(msg => ({
+        //   id: msg.id,
+        //   text: msg.text,
+        //   authorName: msg.User.name,
+        //   createdAt: msg.createdAt,
+        // }));
 
-        socket.emit('message_history', messages);
+        socket.emit('message_history', room.Messages.map(m => m.toJSON()));
       } catch (error) {
         socket.emit('error_message', error.message);
       }
@@ -53,9 +57,10 @@ const setupSockets = (server) => {
 
     socket.on('room_rename', async ({ roomId, newName }) => {
       try {
-        await roomService.renameRoom({ roomId, newName });
+        await roomService.renameRoom({ id: roomId, newName });
 
-        io.emit('room_list', await roomService.getAllRooms());
+        const rooms = await roomService.getAllRooms();
+        io.emit('room_list', rooms);
       } catch (error) {
         socket.emit('error_message', error.message);
       }
@@ -63,9 +68,10 @@ const setupSockets = (server) => {
 
     socket.on('room_delete', async ({ roomId }) => {
       try {
-        await roomService.deleteRoom({ roomId });
+        await roomService.deleteRoom({ id: roomId });
 
-        io.emit('room_list', await roomService.getAllRooms());
+        const rooms = await roomService.getAllRooms();
+        io.emit('room_list', rooms);
       } catch (error) {
         socket.emit('error_message', error.message);
       }
@@ -73,27 +79,28 @@ const setupSockets = (server) => {
 
     socket.on('message_send', async ({ text }) => {
       try {
-        if (!text || !text.trim()) {
-          throw new Error('Message is empty');
-        }
+        // if (!text || !text.trim()) {
+        //   throw new Error('Message is empty');
+        // }
 
         if (!socket.userId || !socket.roomId) {
           throw new Error('User is not in room');
         }
 
+        console.log('SEND MESSAGE:', {
+          text,
+          socketRoomId: socket.roomId,
+          socketUserId: socket.userId,
+          socketUserName: socket.userName,
+        });
         const message = await messageService.createMessage({
           text,
-          // authorName: socket.userName,
-          userId: socket.userId,
           roomId: socket.roomId,
+          authorName: socket.userName,
+          userId: socket.userId,
         })
 
-        io.to(socket.roomId).emit('message_new', {
-          id: message.id,
-          text: message.text,
-          authorName: socket.userName,
-          createdAt: message.createdAt,
-        });
+        io.to(socket.roomId).emit('message_new', message.toJSON());
       } catch (error) {
         socket.emit('error_message', error.message);
       }
