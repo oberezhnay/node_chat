@@ -49,7 +49,6 @@ const joinRoom = async ({ roomId }) => {
         include: [User],
       },
     ],
-    order: [[Message, 'createdAt', 'ASC']],
   });
 
   if (!room) {
